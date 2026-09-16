@@ -1,8 +1,10 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import env from './config/env.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware.js';
+import authRoutes from './modules/auth/auth.routes.js';
 
 const app = express();
 
@@ -16,6 +18,7 @@ app.use(
 );
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(cookieParser());
 
 // --- Health check -----------------------------------------------------------
 app.get('/api/v1/health', (req, res) => {
@@ -23,8 +26,7 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 // --- Feature module routes are mounted here as they are implemented. -------
-// e.g. app.use('/api/v1/auth', authRoutes);
-
+app.use('/api/v1/auth', authRoutes);
 
 // --- 404 + centralized error handling ---------------------------------------
 app.use(notFoundMiddleware);
