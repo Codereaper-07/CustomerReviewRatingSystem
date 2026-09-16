@@ -1,1 +1,224 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --neo-bg: #f8fafc;
+    --neo-card: #ffffff;
+    --neo-border: #000000;
+    --neo-shadow: #000000;
+    --neo-primary: #ffde59;
+    --neo-primary-hover: #ffd32a;
+    --neo-secondary: #c084fc;
+    --neo-accent: #38bdf8;
+    --neo-success: #4ade80;
+    --neo-danger: #f87171;
+    --neo-warning: #fbbf24;
+  }
+
+  body {
+    background-color: var(--neo-bg);
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Professional Neobrutalism Utilities & Components                          */
+/* -------------------------------------------------------------------------- */
+
+/* Core Card Container */
+.neo-card {
+  background-color: #ffffff;
+  border: 2.5px solid #000000;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: all 0.15s ease-in-out;
+}
+
+.neo-card-sm {
+  background-color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0px 0px #000000;
+}
+
+.neo-card-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+
+/* Neobrutal Button Styles */
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2.5px solid #000000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0px 0px #000000;
+  padding: 0.5rem 1.25rem;
+  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.neo-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px #000000;
+}
+
+.neo-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+
+.neo-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+/* Button Variants */
+.neo-btn-primary {
+  background-color: #ffde59;
+  color: #000000;
+}
+.neo-btn-primary:hover {
+  background-color: #ffd32a;
+}
+
+.neo-btn-secondary {
+  background-color: #ffffff;
+  color: #000000;
+}
+.neo-btn-secondary:hover {
+  background-color: #f1f5f9;
+}
+
+.neo-btn-dark {
+  background-color: #000000;
+  color: #ffffff;
+}
+.neo-btn-dark:hover {
+  background-color: #1e293b;
+}
+
+.neo-btn-accent {
+  background-color: #38bdf8;
+  color: #000000;
+}
+.neo-btn-accent:hover {
+  background-color: #0ea5e9;
+}
+
+.neo-btn-danger {
+  background-color: #f87171;
+  color: #000000;
+}
+.neo-btn-danger:hover {
+  background-color: #ef4444;
+}
+
+.neo-btn-success {
+  background-color: #4ade80;
+  color: #000000;
+}
+.neo-btn-success:hover {
+  background-color: #22c55e;
+}
+
+/* Form Inputs */
+.neo-input {
+  width: 100%;
+  border: 2.5px solid #000000;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 0.625rem 0.875rem;
+  font-weight: 500;
+  box-shadow: 2.5px 2.5px 0px 0px #000000;
+  outline: none;
+  transition: all 0.1s ease;
+}
+
+.neo-input:focus {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px #000000;
+  background-color: #ffffff;
+}
+
+/* Badges & Tags */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border: 1.5px solid #000000;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0px 0px #000000;
+}
+
+/* Vote Pill Button (Optimistic UI) */
+.neo-vote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: 2px solid #000000;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  box-shadow: 2px 2px 0px 0px #000000;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+  user-select: none;
+}
+
+.neo-vote-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px 0px #000000;
+}
+
+.neo-vote-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+
+.neo-vote-btn.active-up {
+  background-color: #4ade80;
+  color: #000000;
+}
+
+.neo-vote-btn.active-down {
+  background-color: #f87171;
+  color: #000000;
+}
+
+/* Rating Progress Bar */
+.neo-progress-container {
+  height: 12px;
+  background-color: #e2e8f0;
+  border: 2px solid #000000;
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: 1.5px 1.5px 0px 0px #000000;
+}
+
+.neo-progress-bar {
+  height: 100%;
+  background-color: #ffde59;
+  border-right: 2px solid #000000;
+  transition: width 0.3s ease;
+}
+
+/* Dot Grid Background Pattern */
+.neo-grid-bg {
+  background-color: #f8fafc;
+  background-image: radial-gradient(#000000 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
