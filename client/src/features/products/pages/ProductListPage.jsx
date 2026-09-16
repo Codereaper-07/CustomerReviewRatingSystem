@@ -64,10 +64,10 @@ export function ProductListPage() {
             <div className="text-3xl font-black text-slate-900">100%</div>
             <div className="text-[11px] font-black uppercase text-slate-500 mt-0.5">Real Reviews</div>
           </div>
-          <div className="neo-card p-4 bg-white text-center shadow-[3px_3px_0_0_#000]">
+          {/* <div className="neo-card p-4 bg-white text-center shadow-[3px_3px_0_0_#000]">
             <div className="text-3xl font-black text-amber-500">★ 4.8</div>
             <div className="text-[11px] font-black uppercase text-slate-500 mt-0.5">Avg Rating</div>
-          </div>
+          </div> */}
         </div>
       </div>
 
