@@ -28,8 +28,9 @@ export async function deleteCache(key) {
  */
 export async function deleteCacheByPrefix(prefix) {
   const keys = [];
-  for await (const key of redisClient.scanIterator({ MATCH: `${prefix}*` })) {
-    keys.push(key);
+  // scanIterator yields batches of keys (arrays), not one key at a time.
+  for await (const batch of redisClient.scanIterator({ MATCH: `${prefix}*` })) {
+    keys.push(...batch);
   }
   if (keys.length > 0) {
     await redisClient.del(keys);

@@ -1,17 +1,64 @@
 import app from './app.js';
 import env, { assertRequiredEnv } from './config/env.js';
-import { connectDB } from './config/db.js';
-import { connectRedis } from './config/redis.js';
+import { connectDB, disconnectDB } from './config/db.js';
+import { connectRedis, disconnectRedis } from './config/redis.js';
+
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 async function start() {
   assertRequiredEnv();
 
+  // Infrastructure must be ready before the HTTP server starts accepting traffic.
   await connectDB();
   await connectRedis();
 
-  app.listen(env.port, () => {
+  const httpServer = app.listen(env.port, () => {
     console.log(`[server] Listening on port ${env.port} (${env.nodeEnv})`);
   });
+
+  registerGracefulShutdown(httpServer);
+}
+
+/**
+ * Stops accepting new HTTP connections, then closes the MongoDB and Redis
+ * connections before exiting. Forces an exit if shutdown hangs.
+ */
+function registerGracefulShutdown(httpServer) {
+  let shuttingDown = false;
+
+  async function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+
+    console.log(`[server] ${signal} received, shutting down gracefully...`);
+    const forceExitTimer = setTimeout(() => {
+      console.error(`[server] Shutdown timed out after ${SHUTDOWN_TIMEOUT_MS}ms, forcing exit`);
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+
+    try {
+      await new Promise((resolve, reject) => {
+        httpServer.close((err) => (err ? reject(err) : resolve()));
+      });
+      console.log('[server] HTTP server closed');
+
+      await disconnectDB();
+      console.log('[server] MongoDB connection closed');
+
+      await disconnectRedis();
+      console.log('[server] Redis connection closed');
+
+      clearTimeout(forceExitTimer);
+      process.exit(0);
+    } catch (err) {
+      console.error('[server] Error during graceful shutdown:', err);
+      clearTimeout(forceExitTimer);
+      process.exit(1);
+    }
+  }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 start().catch((err) => {
