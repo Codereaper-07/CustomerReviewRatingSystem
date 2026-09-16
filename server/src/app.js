@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import env from './config/env.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware.js';
 import authRoutes from './modules/auth/auth.routes.js';
+import productRoutes from './modules/products/product.routes.js';
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.get('/api/v1/health', (req, res) => {
 
 // --- Feature module routes are mounted here as they are implemented. -------
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/products', productRoutes);
 
 // --- 404 + centralized error handling ---------------------------------------
 app.use(notFoundMiddleware);
