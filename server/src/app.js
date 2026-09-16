@@ -25,6 +25,7 @@ app.get('/api/v1/health', (req, res) => {
 // --- Feature module routes are mounted here as they are implemented. -------
 // e.g. app.use('/api/v1/auth', authRoutes);
 
+
 // --- 404 + centralized error handling ---------------------------------------
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
