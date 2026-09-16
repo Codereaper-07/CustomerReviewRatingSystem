@@ -6,6 +6,7 @@ import env from './config/env.js';
 import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import productRoutes from './modules/products/product.routes.js';
+import { productReviewsRouter, reviewsRouter } from './modules/reviews/review.routes.js';
 
 const app = express();
 
@@ -29,6 +30,10 @@ app.get('/api/v1/health', (req, res) => {
 // --- Feature module routes are mounted here as they are implemented. -------
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes);
+// Nested review routes (/:productId/reviews) fall through from
+// productRoutes above since it has no matching route of its own.
+app.use('/api/v1/products', productReviewsRouter);
+app.use('/api/v1/reviews', reviewsRouter);
 
 // --- 404 + centralized error handling ---------------------------------------
 app.use(notFoundMiddleware);
