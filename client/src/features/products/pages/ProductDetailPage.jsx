@@ -151,6 +151,7 @@ export function ProductDetailPage() {
         <div className="space-y-6">
           <RatingBreakdown ratingStats={product.ratingStats} />
 
+        {/* {!Boolean(editingReview) &&
           <div className="neo-card p-6 bg-amber-100 text-center space-y-3">
             <h4 className="font-black text-base text-slate-900">Have you used this product?</h4>
             <p className="text-xs font-bold text-slate-700">
@@ -163,7 +164,8 @@ export function ProductDetailPage() {
             >
               Write a Review
             </Button>
-          </div>
+          </div> 
+         } */}
         </div>
       </div>
 
