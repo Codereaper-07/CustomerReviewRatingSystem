@@ -1,4 +1,7 @@
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '../context/ToastContext.jsx';
+import { AuthProvider } from '../context/AuthContext.jsx';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -10,11 +13,18 @@ const queryClient = new QueryClient({
 });
 
 /**
- * Composition root for app-wide providers (data fetching, etc.).
+ * Composition root for app-wide providers (data fetching, auth, toasts).
  * Routing is provided separately via routes.jsx / RouterProvider.
  */
 export function AppProviders({ children }) {
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <AuthProvider>{children}</AuthProvider>
+      </ToastProvider>
+    </QueryClientProvider>
+  );
 }
 
 export default AppProviders;
+
