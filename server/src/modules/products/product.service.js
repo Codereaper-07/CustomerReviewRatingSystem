@@ -5,6 +5,11 @@ import { CURSOR_SORT, parsePaginationParams, buildCursorFilter, buildPaginationM
 
 const LIST_CACHE_PREFIX = 'products:list:';
 const DETAIL_CACHE_PREFIX = 'products:detail:';
+// Matches the key the Admin module caches its dashboard under. Kept as a
+// small local constant (rather than importing from the Admin module) so
+// the two feature modules stay loosely coupled — this is the minimal
+// hook needed so product mutations don't leave a stale dashboard cached.
+const ADMIN_DASHBOARD_CACHE_KEY = 'admin:dashboard';
 
 // Fields a client may ever set on a product. ratingStats is intentionally
 // excluded here (and rejected earlier by the .strict() Zod schemas) — it
@@ -25,6 +30,8 @@ async function invalidateProductCaches(productId) {
   if (productId) {
     await deleteCache(buildDetailCacheKey(productId));
   }
+  // Product create/update/delete all change dashboard totals/recents.
+  await deleteCache(ADMIN_DASHBOARD_CACHE_KEY);
 }
 
 /** Maps a Product document (or `.lean()` object) to its public API shape. */

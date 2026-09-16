@@ -7,6 +7,8 @@ import { errorMiddleware, notFoundMiddleware } from './middleware/error.middlewa
 import authRoutes from './modules/auth/auth.routes.js';
 import productRoutes from './modules/products/product.routes.js';
 import { productReviewsRouter, reviewsRouter } from './modules/reviews/review.routes.js';
+import voteRoutes from './modules/votes/vote.routes.js';
+import adminRoutes from './modules/admin/admin.routes.js';
 
 const app = express();
 
@@ -34,6 +36,10 @@ app.use('/api/v1/products', productRoutes);
 // productRoutes above since it has no matching route of its own.
 app.use('/api/v1/products', productReviewsRouter);
 app.use('/api/v1/reviews', reviewsRouter);
+// /:reviewId/vote doesn't overlap with reviewsRouter's /:reviewId, so both
+// can be mounted at the same base path without conflict.
+app.use('/api/v1/reviews', voteRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // --- 404 + centralized error handling ---------------------------------------
 app.use(notFoundMiddleware);

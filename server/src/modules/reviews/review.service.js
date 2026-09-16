@@ -17,6 +17,11 @@ const PRODUCT_DETAIL_CACHE_PREFIX = 'products:detail:';
 // single product (list pages mix products), same as product.service.js's
 // own `invalidateProductCaches` does for its own writes.
 const PRODUCT_LIST_CACHE_PREFIX = 'products:list:';
+// Matches the key the Admin module caches its dashboard under. Kept as a
+// small local constant (rather than importing from the Admin module) so
+// the two feature modules stay loosely coupled — this is the minimal
+// hook needed so review mutations don't leave a stale dashboard cached.
+const ADMIN_DASHBOARD_CACHE_KEY = 'admin:dashboard';
 
 // Maps a 1-5 rating to its Product.ratingStats.distribution bucket key.
 const RATING_BUCKET_KEYS = { 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five' };
@@ -45,6 +50,10 @@ async function invalidateProductDetailCache(productId) {
 async function invalidateProductRatingCaches(productId) {
   await invalidateProductDetailCache(productId);
   await deleteCacheByPrefix(PRODUCT_LIST_CACHE_PREFIX);
+}
+
+async function invalidateAdminDashboardCache() {
+  await deleteCache(ADMIN_DASHBOARD_CACHE_KEY);
 }
 
 /**
@@ -197,6 +206,8 @@ export async function createReview(productId, userId, input) {
 
   await invalidateReviewListCache(productId);
   await invalidateProductRatingCaches(productId);
+  // Review count/recent-reviews changed regardless of the rating math above.
+  await invalidateAdminDashboardCache();
 
   return fetchReviewForResponse(created._id);
 }
@@ -292,6 +303,9 @@ export async function updateReview(reviewId, userId, input) {
   if (ratingChanged) {
     await invalidateProductRatingCaches(productId);
   }
+  // The dashboard's "recent reviews" can include this review's content
+  // even when the rating itself didn't change, so always invalidate.
+  await invalidateAdminDashboardCache();
 
   return fetchReviewForResponse(updated._id);
 }
@@ -363,6 +377,7 @@ export async function deleteReview(reviewId, userId) {
 
   await invalidateReviewListCache(productId);
   await invalidateProductRatingCaches(productId);
+  await invalidateAdminDashboardCache();
 }
 
 export default { listReviews, createReview, updateReview, deleteReview };
