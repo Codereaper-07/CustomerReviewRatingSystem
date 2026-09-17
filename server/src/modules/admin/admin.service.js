@@ -114,4 +114,42 @@ export async function getDashboard() {
   return dashboard;
 }
 
-export default { getDashboard };
+const INSIGHTS_CACHE_KEY = 'admin:product-insights';
+const INSIGHTS_CACHE_TTL = 60 * 60; // 1 hour (in seconds)
+
+/**
+ * Returns every product's AI-generated review insights (summary +
+ * sentiment breakdown + lastGeneratedAt). Admin-only — never exposed
+ * to public product endpoints. The result is cached for 1 hour; the
+ * nightly cron job invalidates it after each run.
+ */
+export async function getProductInsights() {
+  const cached = await getCache(INSIGHTS_CACHE_KEY);
+  if (cached) return cached;
+
+  const products = await Product.find(
+    {},
+    { _id: 1, name: 1, slug: 1, ratingStats: 1, aiInsights: 1 }
+  )
+    .sort({ 'ratingStats.count': -1 }) // most-reviewed first
+    .lean();
+
+  const insights = products.map((p) => ({
+    id: p._id.toString(),
+    name: p.name,
+    slug: p.slug,
+    reviewCount: p.ratingStats?.count ?? 0,
+    averageRating: p.ratingStats?.average ?? 0,
+    aiInsights: {
+      summary: p.aiInsights?.summary ?? null,
+      sentiment: p.aiInsights?.sentiment ?? { positive: 0, neutral: 0, negative: 0 },
+      lastGeneratedAt: p.aiInsights?.lastGeneratedAt ?? null,
+    },
+  }));
+
+  // Use a shorter TTL here since insights change daily.
+  await setCache(INSIGHTS_CACHE_KEY, insights, INSIGHTS_CACHE_TTL);
+  return insights;
+}
+
+export default { getDashboard, getProductInsights };

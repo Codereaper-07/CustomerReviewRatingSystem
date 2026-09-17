@@ -20,6 +20,33 @@ const ratingDistributionSchema = new Schema(
 );
 
 /**
+ * AI-generated sentiment breakdown for admin use only.
+ * Values represent percentage (0-100) of reviews in each category.
+ * Populated by the nightly Gemini cron job (reviewSummary.cron.js).
+ */
+const sentimentSchema = new Schema(
+  {
+    positive: { type: Number, default: 0, min: 0, max: 100 },
+    neutral: { type: Number, default: 0, min: 0, max: 100 },
+    negative: { type: Number, default: 0, min: 0, max: 100 },
+  },
+  { _id: false }
+);
+
+/**
+ * Admin-only AI insights subdocument. Never included in public product
+ * responses — the admin service selects it explicitly for its own endpoint.
+ */
+const aiInsightsSchema = new Schema(
+  {
+    summary: { type: String, default: null },
+    sentiment: { type: sentimentSchema, default: () => ({}) },
+    lastGeneratedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
+/**
  * Denormalized rating statistics stored on the product so reads don't
  * need to aggregate the reviews collection. See ratingDistributionSchema.
  */
@@ -67,6 +94,11 @@ const productSchema = new Schema(
     },
     ratingStats: {
       type: ratingStatsSchema,
+      default: () => ({}),
+    },
+    // Admin-only — never included in public product responses.
+    aiInsights: {
+      type: aiInsightsSchema,
       default: () => ({}),
     },
   },

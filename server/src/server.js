@@ -2,6 +2,7 @@ import app from './app.js';
 import env, { assertRequiredEnv } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
+import { startReviewSummaryCron } from './services/reviewSummary.cron.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -16,14 +17,17 @@ async function start() {
     console.log(`[server] Listening on port ${env.port} (${env.nodeEnv})`);
   });
 
-  registerGracefulShutdown(httpServer);
+  // Start the nightly AI review summary cron job.
+  const cronTask = startReviewSummaryCron();
+
+  registerGracefulShutdown(httpServer, cronTask);
 }
 
 /**
  * Stops accepting new HTTP connections, then closes the MongoDB and Redis
  * connections before exiting. Forces an exit if shutdown hangs.
  */
-function registerGracefulShutdown(httpServer) {
+function registerGracefulShutdown(httpServer, cronTask) {
   let shuttingDown = false;
 
   async function shutdown(signal) {
@@ -37,6 +41,9 @@ function registerGracefulShutdown(httpServer) {
     }, SHUTDOWN_TIMEOUT_MS);
 
     try {
+      // Stop the cron job from firing again during shutdown.
+      if (cronTask) cronTask.stop();
+
       await new Promise((resolve, reject) => {
         httpServer.close((err) => (err ? reject(err) : resolve()));
       });
