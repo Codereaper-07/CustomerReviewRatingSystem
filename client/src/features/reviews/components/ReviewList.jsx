@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { MessageSquarePlus, RefreshCw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { MessageSquarePlus, RefreshCw, Star } from 'lucide-react';
 import { useInfiniteReviews } from '../hooks/useReviews.js';
 import { useReviewMutations } from '../hooks/useReviewMutations.js';
 import { useVoteMutation } from '../../votes/hooks/useVoteMutation.js';
@@ -16,6 +16,9 @@ export function ReviewList({
   const { user } = useAuth();
   const currentUserId = user?.id;
 
+  // Star filter state: null = "All", 1-5 = specific star rating.
+  const [starFilter, setStarFilter] = useState(null);
+
   const {
     data,
     isLoading,
@@ -30,19 +33,35 @@ export function ReviewList({
   const { deleteReview, isDeleting } = useReviewMutations(productId);
   const voteMutation = useVoteMutation(productId);
 
-  const reviews = useMemo(() => {
+  // All reviews across all fetched pages.
+  const allReviews = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => (Array.isArray(page?.data) ? page.data : page?.data?.items ?? []));
   }, [data]);
 
-  // Check if current user already submitted a review for this product
+  // Count of reviews per star rating (for the filter badge).
+  const starCounts = useMemo(() => {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const r of allReviews) {
+      if (r.rating >= 1 && r.rating <= 5) counts[r.rating]++;
+    }
+    return counts;
+  }, [allReviews]);
+
+  // Reviews visible after applying the star filter.
+  const reviews = useMemo(() => {
+    if (starFilter === null) return allReviews;
+    return allReviews.filter((r) => r.rating === starFilter);
+  }, [allReviews, starFilter]);
+
+  // Check if current user already submitted a review for this product.
   const userReview = useMemo(() => {
     if (!currentUserId) return null;
-    return reviews.find(
+    return allReviews.find(
       (r) =>
         String(r.user?.id || r.user?._id || r.userId || r.user) === String(currentUserId)
     );
-  }, [reviews, currentUserId]);
+  }, [allReviews, currentUserId]);
 
   const handleDelete = async (reviewId) => {
     if (window.confirm('Are you sure you want to delete your review?')) {
@@ -90,7 +109,7 @@ export function ReviewList({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b-2.5 border-black">
         <div>
           <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-            Customer Reviews ({reviews.length})
+            Customer Reviews ({allReviews.length})
           </h3>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
             Verified ratings and feedback from actual users
@@ -117,6 +136,45 @@ export function ReviewList({
         )}
       </div>
 
+      {/* Star Rating Filter Bar */}
+      {allReviews.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Filter:</span>
+          {/* "All" button */}
+          <button
+            onClick={() => setStarFilter(null)}
+            className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-black border-2 border-black rounded-md transition-colors shadow-[2px_2px_0_0_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] ${
+              starFilter === null
+                ? 'bg-black text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            All
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-black ${starFilter === null ? 'bg-white text-black' : 'bg-slate-100 text-slate-600'}`}>
+              {allReviews.length}
+            </span>
+          </button>
+          {/* 5 → 1 star buttons */}
+          {[5, 4, 3, 2, 1].map((star) => (
+            <button
+              key={star}
+              onClick={() => setStarFilter(starFilter === star ? null : star)}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-black border-2 border-black rounded-md transition-colors shadow-[2px_2px_0_0_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] ${
+                starFilter === star
+                  ? 'bg-amber-400 text-black'
+                  : 'bg-white text-slate-700 hover:bg-amber-50'
+              }`}
+            >
+              <Star className="w-3 h-3 fill-current" />
+              {star}
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-black ${starFilter === star ? 'bg-black text-white' : 'bg-slate-100 text-slate-600'}`}>
+                {starCounts[star]}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Review List Items */}
       {reviews.length === 0 ? (
         <div className="neo-card p-10 bg-white text-center space-y-4">
@@ -124,14 +182,33 @@ export function ReviewList({
             <MessageSquarePlus className="w-6 h-6 text-amber-700" />
           </div>
           <div className="space-y-1">
-            <h4 className="font-black text-lg text-slate-900">No reviews yet</h4>
-            <p className="text-xs font-bold text-slate-500 max-w-sm mx-auto">
-              Be the first to share your thoughts and help others make an informed decision!
-            </p>
+            {starFilter !== null ? (
+              <>
+                <h4 className="font-black text-lg text-slate-900">No {starFilter}★ reviews</h4>
+                <p className="text-xs font-bold text-slate-500 max-w-sm mx-auto">
+                  No reviews with this rating yet.{' '}
+                  <button
+                    onClick={() => setStarFilter(null)}
+                    className="underline text-amber-600 font-black"
+                  >
+                    Show all reviews
+                  </button>
+                </p>
+              </>
+            ) : (
+              <>
+                <h4 className="font-black text-lg text-slate-900">No reviews yet</h4>
+                <p className="text-xs font-bold text-slate-500 max-w-sm mx-auto">
+                  Be the first to share your thoughts and help others make an informed decision!
+                </p>
+              </>
+            )}
           </div>
-          <Button variant="primary" onClick={onOpenWriteModal} className="text-xs py-2 px-4">
-            Write First Review
-          </Button>
+          {starFilter === null && (
+            <Button variant="primary" onClick={onOpenWriteModal} className="text-xs py-2 px-4">
+              Write First Review
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -147,8 +224,8 @@ export function ReviewList({
             />
           ))}
 
-          {/* Cursor Pagination "Load More" */}
-          {hasNextPage && (
+          {/* Cursor Pagination "Load More" — only show when not filtering */}
+          {starFilter === null && hasNextPage && (
             <div className="flex justify-center pt-4">
               <Button
                 variant="secondary"

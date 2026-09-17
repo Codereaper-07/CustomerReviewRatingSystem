@@ -9,9 +9,13 @@ import {
   ThumbsDown,
   ArrowRight,
   TrendingUp,
+  Brain,
+  RefreshCw,
 } from 'lucide-react';
 import { useAdminDashboard } from '../hooks/useAdminDashboard.js';
+import { useProductInsights } from '../hooks/useProductInsights.js';
 import MetricCard from '../components/MetricCard.jsx';
+import ProductSentimentCard from '../components/ProductSentimentCard.jsx';
 import StarRating from '../../../components/ui/StarRating.jsx';
 import { formatCurrency, formatRelativeTime } from '../../../utils/formatters.js';
 import Skeleton from '../../../components/ui/Skeleton.jsx';
@@ -19,6 +23,11 @@ import Button from '../../../components/ui/Button.jsx';
 
 export function AdminDashboardPage() {
   const { data: dashboard, isLoading, isError, error, refetch } = useAdminDashboard();
+  const {
+    data: productInsights = [],
+    isLoading: isInsightsLoading,
+    refetch: refetchInsights,
+  } = useProductInsights();
 
   if (isLoading) {
     return (
@@ -248,6 +257,48 @@ export function AdminDashboardPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* AI Product Insights — Admin Only */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <Brain className="w-5 h-5 text-violet-600" />
+              AI Product Insights
+            </h2>
+            <p className="text-xs font-bold text-slate-500 mt-0.5">
+              Gemini-powered review summaries &amp; sentiment — refreshed daily at midnight
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() => refetchInsights()}
+            className="text-xs py-1.5 px-3"
+          >
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            Refresh
+          </Button>
+        </div>
+
+        {isInsightsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-48" />
+            ))}
+          </div>
+        ) : productInsights.length === 0 ? (
+          <div className="neo-card p-10 bg-white text-center space-y-2">
+            <Brain className="w-10 h-10 text-slate-300 mx-auto" />
+            <p className="font-black text-slate-500">No products found.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {productInsights.map((product) => (
+              <ProductSentimentCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, ShieldCheck, Tag, Star } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, ShieldCheck, Tag, Star, Brain, Sparkles } from 'lucide-react';
 import { useProduct } from '../hooks/useProducts.js';
 import { useReviewMutations } from '../../reviews/hooks/useReviewMutations.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
@@ -13,6 +13,7 @@ import StarRating from '../../../components/ui/StarRating.jsx';
 import Badge from '../../../components/ui/Badge.jsx';
 import Button from '../../../components/ui/Button.jsx';
 import Skeleton from '../../../components/ui/Skeleton.jsx';
+import Accordion from '../../../components/ui/Accordion.jsx';
 
 export function ProductDetailPage() {
   const { productId } = useParams();
@@ -134,6 +135,28 @@ export function ProductDetailPage() {
             </p>
           </div>
 
+          {/* AI Review Summary (Visible to all users) */}
+          {product.aiSummary && product.aiSummary !== 'No reviews yet.' && (
+            <div className="p-5 neo-card-sm bg-violet-50 border-2 border-black space-y-2.5 shadow-[2px_2px_0_0_#000]">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-violet-200 border border-black flex items-center justify-center">
+                    <Brain className="w-3.5 h-3.5 text-violet-800" />
+                  </div>
+                  <h3 className="text-xs font-black text-violet-950 uppercase tracking-wider">
+                    AI Review Summary
+                  </h3>
+                </div>
+                <span className="neo-badge bg-violet-200 text-violet-900 text-[10px] flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" /> Gemini
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
+                {product.aiSummary}
+              </p>
+            </div>
+          )}
+
           <div className="p-4 neo-card-sm bg-emerald-50 flex items-center gap-3">
             <ShieldCheck className="w-6 h-6 text-emerald-700 stroke-[2.5]" />
             <div>
@@ -169,14 +192,18 @@ export function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Reviews Feed Section */}
-      <div className="pt-6">
+      {/* Reviews Feed Section — collapsible accordion */}
+      <Accordion
+        title={`Customer Reviews (${product.ratingStats?.count ?? 0})`}
+        defaultOpen={true}
+        className="pt-0"
+      >
         <ReviewList
           productId={productId}
           onOpenWriteModal={handleOpenWriteModal}
           onOpenEditModal={handleOpenEditModal}
         />
-      </div>
+      </Accordion>
 
       {/* Review Modal Form */}
       <ReviewFormModal
