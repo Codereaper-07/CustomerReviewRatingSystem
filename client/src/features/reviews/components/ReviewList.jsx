@@ -7,6 +7,8 @@ import { useAuth } from '../../auth/hooks/useAuth.js';
 import ReviewItem from './ReviewItem.jsx';
 import Button from '../../../components/ui/Button.jsx';
 import Skeleton from '../../../components/ui/Skeleton.jsx';
+import { useToast } from '../../../context/ToastContext.jsx';
+import ReportReviewModal from '../../reports/components/ReportReviewModal.jsx';
 
 export function ReviewList({
   productId,
@@ -14,10 +16,13 @@ export function ReviewList({
   onOpenEditModal,
 }) {
   const { user } = useAuth();
+  const toast = useToast();
   const currentUserId = user?.id;
 
   // Star filter state: null = "All", 1-5 = specific star rating.
   const [starFilter, setStarFilter] = useState(null);
+  // Reporting state
+  const [reportingReview, setReportingReview] = useState(null);
 
   const {
     data,
@@ -217,6 +222,13 @@ export function ReviewList({
               onEdit={onOpenEditModal}
               onDelete={handleDelete}
               onVote={handleVote}
+              onReport={(rev) => {
+                if (!currentUserId) {
+                  toast.info('Please log in to report a review.', 'Authentication Required');
+                  return;
+                }
+                setReportingReview(rev);
+              }}
               isDeleting={isDeleting}
             />
           ))}
@@ -236,6 +248,13 @@ export function ReviewList({
           )}
         </div>
       )}
+
+      {/* Report Review Modal */}
+      <ReportReviewModal
+        isOpen={Boolean(reportingReview)}
+        onClose={() => setReportingReview(null)}
+        review={reportingReview}
+      />
     </div>
   );
 }

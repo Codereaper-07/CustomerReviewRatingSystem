@@ -9,6 +9,8 @@ import productRoutes from './modules/products/product.routes.js';
 import { productReviewsRouter, reviewsRouter } from './modules/reviews/review.routes.js';
 import voteRoutes from './modules/votes/vote.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import { reviewReportRouter, adminReportRouter } from './modules/reports/report.routes.js';
+import notificationRoutes from './modules/notifications/notification.routes.js';
 
 const app = express();
 
@@ -39,7 +41,11 @@ app.use('/api/v1/reviews', reviewsRouter);
 // /:reviewId/vote doesn't overlap with reviewsRouter's /:reviewId, so both
 // can be mounted at the same base path without conflict.
 app.use('/api/v1/reviews', voteRoutes);
+// /:reviewId/report doesn't conflict with other routes on /api/v1/reviews
+app.use('/api/v1/reviews', reviewReportRouter);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/admin/reports', adminReportRouter);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // --- 404 + centralized error handling ---------------------------------------
 app.use(notFoundMiddleware);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Trash2, ShieldCheck } from 'lucide-react';
+import { Edit2, Trash2, ShieldCheck, Flag } from 'lucide-react';
 import { formatRelativeTime } from '../../../utils/formatters.js';
 import StarRating from '../../../components/ui/StarRating.jsx';
 import VoteButtons from '../../votes/components/VoteButtons.jsx';
@@ -10,6 +10,7 @@ export function ReviewItem({
   onEdit,
   onDelete,
   onVote,
+  onReport,
   isDeleting = false,
 }) {
   const isOwner =
@@ -74,17 +75,31 @@ export function ReviewItem({
         </p>
       </div>
 
-      {/* Footer: Helpful Vote Buttons */}
-      <div className="pt-3 border-t-2 border-black flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Was this review helpful?
-        </span>
-        <VoteButtons
-          reviewId={review._id}
-          voteStats={review.voteStats}
-          currentUserVote={review.currentUserVote}
-          onVote={onVote}
-        />
+      {/* Footer: Helpful Vote Buttons & Report Action */}
+      <div className="pt-3 border-t-2 border-black flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Was this review helpful?
+          </span>
+          <VoteButtons
+            reviewId={review._id}
+            voteStats={review.voteStats}
+            currentUserVote={review.currentUserVote}
+            onVote={onVote}
+          />
+        </div>
+
+        {!isOwner && onReport && (
+          <button
+            type="button"
+            onClick={() => onReport(review)}
+            className="inline-flex items-center gap-1 text-[11px] font-black text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+            title="Report this review"
+          >
+            <Flag className="w-3 h-3 stroke-[2.5]" />
+            <span className="hidden sm:inline">Report</span>
+          </button>
+        )}
       </div>
     </div>
   );

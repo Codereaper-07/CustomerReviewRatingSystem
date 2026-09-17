@@ -9,6 +9,7 @@ import ProductListPage from '../features/products/pages/ProductListPage.jsx';
 import ProductDetailPage from '../features/products/pages/ProductDetailPage.jsx';
 import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage.jsx';
 import AdminProductsPage from '../features/admin/pages/AdminProductsPage.jsx';
+import AdminReportsPage from '../features/admin/pages/AdminReportsPage.jsx';
 
 export const router = createBrowserRouter([
   // Public Customer Experience
@@ -61,6 +62,10 @@ export const router = createBrowserRouter([
       {
         path: 'products',
         element: <AdminProductsPage />,
+      },
+      {
+        path: 'reports',
+        element: <AdminReportsPage />,
       },
     ],
   },

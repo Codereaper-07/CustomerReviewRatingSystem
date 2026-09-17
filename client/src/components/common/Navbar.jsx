@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Star, Shield, LogOut, LogIn, UserPlus, Package, LayoutDashboard } from 'lucide-react';
+import { Star, Shield, LogOut, LogIn, UserPlus, Package, LayoutDashboard, Flag } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth.js';
 import Button from '../ui/Button.jsx';
 import Badge from '../ui/Badge.jsx';
+import NotificationBell from '../../features/notifications/components/NotificationBell.jsx';
 
 export function Navbar() {
   const { user, isAuthenticated, isAdmin, logout, isLoggingOut } = useAuth();
@@ -63,7 +64,16 @@ export function Navbar() {
                 }`}
               >
                 <Shield className="w-4 h-4 mr-1.5 stroke-[2.5]" />
-                Manage Catalog
+                Catalog
+              </Link>
+              <Link
+                to="/admin/reports"
+                className={`neo-btn py-1.5 px-3 text-sm ${
+                  location.pathname === '/admin/reports' ? 'neo-btn-accent' : 'neo-btn-secondary'
+                }`}
+              >
+                <Flag className="w-4 h-4 mr-1.5 stroke-[2.5]" />
+                Reports
               </Link>
             </>
           )}
@@ -73,6 +83,7 @@ export function Navbar() {
         <div className="flex items-center gap-2.5">
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <div className="hidden sm:flex flex-col items-end">
                 <span className="text-sm font-black text-slate-900 leading-tight">
                   {user?.name}
@@ -143,7 +154,16 @@ export function Navbar() {
               }`}
             >
               <Shield className="w-3 h-3 mr-1 inline" />
-              Manage
+              Catalog
+            </Link>
+            <Link
+              to="/admin/reports"
+              className={`neo-badge py-1 px-2.5 ${
+                location.pathname === '/admin/reports' ? 'bg-rose-300' : 'bg-white'
+              }`}
+            >
+              <Flag className="w-3 h-3 mr-1 inline" />
+              Reports
             </Link>
           </>
         )}

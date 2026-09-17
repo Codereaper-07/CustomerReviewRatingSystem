@@ -36,6 +36,15 @@ export function AdminLayout() {
             >
               Catalog Management
             </Link>
+            <span>•</span>
+            <Link
+              to="/admin/reports"
+              className={`hover:underline ${
+                location.pathname === '/admin/reports' ? 'underline' : ''
+              }`}
+            >
+              Moderation Reports
+            </Link>
           </div>
         </div>
       </div>
