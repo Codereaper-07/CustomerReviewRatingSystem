@@ -45,6 +45,7 @@ function toPublicProduct(doc) {
     price: doc.price,
     image: doc.image ?? null,
     ratingStats: doc.ratingStats,
+    aiSummary: doc.aiInsights?.summary ?? null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

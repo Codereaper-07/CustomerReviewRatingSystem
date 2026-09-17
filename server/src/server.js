@@ -2,7 +2,8 @@ import app from './app.js';
 import env, { assertRequiredEnv } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
-import { startReviewSummaryCron } from './services/reviewSummary.cron.js';
+import { runReviewSummaryCron, startReviewSummaryCron } from './services/reviewSummary.cron.js';
+// import { runReviewSummaryCron } from './services/review-summary.cron.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -72,3 +73,7 @@ start().catch((err) => {
   console.error('[server] Failed to start:', err);
   process.exit(1);
 });
+
+runReviewSummaryCron()
+  .then(() => console.log('Review summary cron completed'))
+  .catch(console.error);

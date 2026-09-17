@@ -48,6 +48,10 @@ const env = {
     windowMs: Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     max: Number(process.env.LOGIN_RATE_LIMIT_MAX) || 10,
   },
+
+  // Gemini API key for AI review summaries (admin-only).
+  // Optional in development — cron job will log an error and skip if not set.
+  geminiApiKey: process.env.GEMINI_API_KEY || null,
 };
 
 export function assertRequiredEnv() {
