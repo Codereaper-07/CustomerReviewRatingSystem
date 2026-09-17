@@ -16,7 +16,7 @@ export const reviewApi = {
   },
 
   async updateReview(reviewId, data) {
-    const response = await apiClient.put(`/reviews/${reviewId}`, data);
+    const response = await apiClient.patch(`/reviews/${reviewId}`, data);
     return response.data.data;
   },
 
