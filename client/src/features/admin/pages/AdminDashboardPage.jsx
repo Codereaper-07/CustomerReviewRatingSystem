@@ -243,9 +243,24 @@ export function AdminDashboardPage() {
           <div className="divide-y-2 divide-slate-100">
             {recentReviews.map((r) => (
               <div key={r.id} className="py-3 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-black text-xs text-slate-900">{r.user?.name || 'Customer'}</span>
-                  <div className="text-amber-500 font-black text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-black text-xs text-slate-900 truncate">
+                      {r.user?.name || 'Customer'}
+                    </span>
+                    {r.productName && (
+                      <span className="text-[11px] font-bold text-slate-400 truncate">
+                        on{' '}
+                        <Link
+                          to={`/products/${r.productId}`}
+                          className="text-slate-600 hover:text-black hover:underline"
+                        >
+                          {r.productName}
+                        </Link>
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-amber-500 font-black text-xs shrink-0">
                     {'★'.repeat(r.rating)}
                   </div>
                 </div>

@@ -32,9 +32,16 @@ function toRecentReview(doc) {
   const userIsPopulated = rawUser && typeof rawUser === 'object' && rawUser.name !== undefined;
   const user = userIsPopulated ? { id: rawUser._id.toString(), name: rawUser.name } : { id: rawUser?.toString() };
 
+  const rawProduct = doc.productId;
+  const productIsPopulated = rawProduct && typeof rawProduct === 'object' && rawProduct.name !== undefined;
+  const product = productIsPopulated
+    ? { id: rawProduct._id.toString(), name: rawProduct.name, slug: rawProduct.slug }
+    : { id: rawProduct?.toString(), name: null };
+
   return {
     id: doc._id.toString(),
-    productId: doc.productId.toString(),
+    productId: product.id,
+    productName: product.name,
     user,
     rating: doc.rating,
     title: doc.title,
@@ -81,7 +88,12 @@ export async function getDashboard() {
     ]),
     User.countDocuments({ role: 'customer' }),
     Product.find().sort({ createdAt: -1 }).limit(RECENT_LIMIT).lean(),
-    Review.find().sort({ createdAt: -1 }).limit(RECENT_LIMIT).populate('userId', 'name').lean(),
+    Review.find()
+      .sort({ createdAt: -1 })
+      .limit(RECENT_LIMIT)
+      .populate('userId', 'name')
+      .populate('productId', 'name slug')
+      .lean(),
   ]);
 
   const totalRatingCount = productAgg?.totalRatingCount ?? 0;
@@ -128,7 +140,7 @@ export async function getProductInsights() {
   if (cached) return cached;
 
   const products = await Product.find(
-    {},
+    { 'ratingStats.count': { $gt: 0 } },
     { _id: 1, name: 1, slug: 1, ratingStats: 1, aiInsights: 1 }
   )
     .sort({ 'ratingStats.count': -1 }) // most-reviewed first

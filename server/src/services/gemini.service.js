@@ -2,6 +2,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import env from '../config/env.js';
 
 let _genAI = null;
+let lastRequestTimestamp = 0;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function getGenAI() {
   if (!_genAI) {
@@ -14,9 +19,63 @@ function getGenAI() {
 }
 
 /**
+ * Enforces the maximum requests-per-minute rate limit.
+ * If calls happen too fast, it sleeps for the difference so calls are spaced out evenly.
+ */
+async function throttleRateLimit() {
+  const maxRpm = env.geminiMaxRpm || 5;
+  const minIntervalMs = Math.ceil(60_000 / maxRpm); // e.g. 60,000 / 5 = 12,000ms
+
+  const now = Date.now();
+  const elapsed = now - lastRequestTimestamp;
+  if (elapsed < minIntervalMs) {
+    const waitMs = minIntervalMs - elapsed;
+    console.log(`[gemini.service] Rate limiter: spacing request by ${(waitMs / 1000).toFixed(1)}s (${maxRpm} RPM limit)...`);
+    await sleep(waitMs);
+  }
+  lastRequestTimestamp = Date.now();
+}
+
+/**
+ * Parses retry delay from Gemini's 429 error response if available.
+ * Defaults to 25 seconds if not explicitly stated.
+ */
+function parseRetryDelayMs(error) {
+  const message = error?.message || String(error);
+
+  // Pattern 1: "Please retry in 25.16s"
+  const match1 = /retry in\s+([\d.]+)\s*s/i.exec(message);
+  if (match1) {
+    return Math.ceil(parseFloat(match1[1]) * 1000);
+  }
+
+  // Pattern 2: "retryDelay":"25s"
+  const match2 = /retryDelay["']?\s*:\s*["']?(\d+)/i.exec(message);
+  if (match2) {
+    return parseInt(match2[1], 10) * 1000;
+  }
+
+  return 25_000; // default 25s backoff
+}
+
+function isQuotaOrRateLimitError(error) {
+  const status = error?.status;
+  const message = error?.message || String(error);
+  return (
+    status === 429 ||
+    message.includes('429') ||
+    message.includes('Too Many Requests') ||
+    message.includes('Quota exceeded') ||
+    message.includes('RATE_LIMIT_EXCEEDED')
+  );
+}
+
+/**
  * Calls the Gemini API to generate a concise summary and sentiment
  * breakdown (positive / neutral / negative percentages) from an array
  * of review objects.
+ *
+ * Implements rate limiting and automatic retry on 429 Too Many Requests.
  *
  * @param {Array<{ rating: number, title: string, body: string }>} reviews
  * @returns {Promise<{ summary: string, sentiment: { positive: number, neutral: number, negative: number } }>}
@@ -30,8 +89,9 @@ export async function generateReviewInsights(reviews) {
   }
 
   const genAI = getGenAI();
+  const modelName = env.geminiModel || 'gemini-1.5-flash';
   const model = genAI.getGenerativeModel({
-    model: 'gemini-3.6-flash',
+    model: modelName,
     generationConfig: {
       responseMimeType: 'application/json',
     },
@@ -65,27 +125,52 @@ Rules:
 - Return ONLY the JSON object, no extra text
 `;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+  const MAX_ATTEMPTS = 3;
+  let lastError;
 
-  let parsed;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    throw new Error(`Gemini returned non-JSON response: ${text.slice(0, 200)}`);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      // Enforce rate limiter before each request
+      await throttleRateLimit();
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error(`Gemini returned non-JSON response: ${text.slice(0, 200)}`);
+      }
+
+      // Validate and normalise the response.
+      const { summary, sentiment } = parsed;
+      const positive = Math.max(0, Math.min(100, Math.round(Number(sentiment?.positive) || 0)));
+      const negative = Math.max(0, Math.min(100, Math.round(Number(sentiment?.negative) || 0)));
+      // Ensure percentages sum to 100.
+      const neutral = Math.max(0, 100 - positive - negative);
+
+      return {
+        summary: typeof summary === 'string' && summary.trim() ? summary.trim() : 'No summary available.',
+        sentiment: { positive, neutral, negative },
+      };
+    } catch (err) {
+      lastError = err;
+      if (isQuotaOrRateLimitError(err) && attempt < MAX_ATTEMPTS) {
+        const retryDelayMs = parseRetryDelayMs(err) + 2000; // Add 2s safety margin
+        console.warn(
+          `[gemini.service] 429 Quota/Rate limit reached. Waiting ${(retryDelayMs / 1000).toFixed(1)}s before retry (attempt ${attempt}/${MAX_ATTEMPTS})...`
+        );
+        await sleep(retryDelayMs);
+        lastRequestTimestamp = Date.now();
+        continue;
+      }
+      throw err;
+    }
   }
 
-  // Validate and normalise the response.
-  const { summary, sentiment } = parsed;
-  const positive = Math.max(0, Math.min(100, Math.round(Number(sentiment?.positive) || 0)));
-  const negative = Math.max(0, Math.min(100, Math.round(Number(sentiment?.negative) || 0)));
-  // Ensure percentages sum to 100.
-  const neutral = Math.max(0, 100 - positive - negative);
-
-  return {
-    summary: typeof summary === 'string' && summary.trim() ? summary.trim() : 'No summary available.',
-    sentiment: { positive, neutral, negative },
-  };
+  throw lastError;
 }
 
 export default { generateReviewInsights };
+

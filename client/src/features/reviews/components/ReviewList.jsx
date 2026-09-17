@@ -108,9 +108,6 @@ export function ReviewList({
       {/* Header with Review Counter & Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b-2.5 border-black">
         <div>
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-            Customer Reviews ({allReviews.length})
-          </h3>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
             Verified ratings and feedback from actual users
           </p>

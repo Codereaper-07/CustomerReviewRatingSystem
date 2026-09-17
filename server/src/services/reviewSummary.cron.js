@@ -12,21 +12,36 @@ const ADMIN_INSIGHTS_CACHE_KEY = 'admin:product-insights';
 /**
  * Runs the Gemini summary job for a single product.
  * Fetches all its reviews, calls the Gemini service, and saves
- * the result back onto the product document. Skips products that
- * have no reviews.
+ * the result back onto the product document.
  *
- * @param {{ _id: ObjectId, name: string, ratingStats: { count: number } }} product
+ * Skips products if no reviews have been added/modified since the last summary.
+ *
+ * @param {{ _id: ObjectId, name: string, ratingStats: { count: number }, aiInsights?: object }} product
+ * @returns {Promise<'processed' | 'skipped'>}
  */
 async function processProduct(product) {
   if (!product.ratingStats?.count || product.ratingStats.count === 0) {
-    return; // Nothing to summarize.
+    return 'skipped';
+  }
+
+  // If a summary already exists, check if any review was created/updated after lastGeneratedAt
+  if (product.aiInsights?.lastGeneratedAt && product.aiInsights?.summary) {
+    const hasNewerReview = await Review.exists({
+      productId: product._id,
+      updatedAt: { $gt: product.aiInsights.lastGeneratedAt },
+    });
+
+    if (!hasNewerReview) {
+      console.log(`[reviewSummary.cron] Skipping "${product.name}": reviews have not changed since last summary.`);
+      return 'skipped';
+    }
   }
 
   const reviews = await Review.find({ productId: product._id })
     .select('rating title body')
     .lean();
 
-  if (!reviews.length) return;
+  if (!reviews.length) return 'skipped';
 
   const insights = await generateReviewInsights(reviews);
 
@@ -41,42 +56,56 @@ async function processProduct(product) {
     }
   );
 
-  // Invalidate the product's detail cache so the admin endpoint
+  // Invalidate the product's detail cache so the public detail page
   // picks up fresh data on the next request.
   await deleteCache(`${PRODUCT_DETAIL_CACHE_PREFIX}${product._id}`);
+  return 'processed';
 }
 
 /**
- * Iterates over every product and generates/refreshes its AI insights.
- * Called by the cron schedule and can also be invoked manually for testing.
+ * Iterates over every product with reviews and generates/refreshes its AI insights.
+ * Automatically rate-limited via gemini.service.js.
  */
 export async function runReviewSummaryCron() {
   console.log('[reviewSummary.cron] Starting daily review summary job...');
 
-  const products = await Product.find({}, { _id: 1, name: 1, ratingStats: 1 }).lean();
+  // Only products that actually have reviews
+  const products = await Product.find(
+    { 'ratingStats.count': { $gt: 0 } },
+    { _id: 1, name: 1, ratingStats: 1, aiInsights: 1 }
+  ).lean();
+
+  console.log(`[reviewSummary.cron] Found ${products.length} product(s) with reviews.`);
 
   let processed = 0;
   let skipped = 0;
   let failed = 0;
 
-  for (const product of products) {
+  for (let i = 0; i < products.length; i++) {
+    const product = products[i];
+    console.log(`[reviewSummary.cron] [${i + 1}/${products.length}] Checking "${product.name}"...`);
+
     try {
-      await processProduct(product);
-      processed++;
+      const status = await processProduct(product);
+      if (status === 'processed') {
+        processed++;
+        console.log(`[reviewSummary.cron] [${i + 1}/${products.length}] Successfully updated "${product.name}".`);
+      } else {
+        skipped++;
+      }
     } catch (err) {
       failed++;
-      console.error(`[reviewSummary.cron] Failed for product ${product._id} (${product.name}):`, err.message);
+      console.error(`[reviewSummary.cron] [${i + 1}/${products.length}] Failed for product "${product.name}":`, err.message);
     }
   }
 
   // Invalidate the admin insights cache so the dashboard reflects the latest data.
   await deleteCache(ADMIN_INSIGHTS_CACHE_KEY);
-  // Product list pages embed ratingStats — invalidate them too since we may
-  // have changed aiInsights on many products.
+  // Product list pages embed ratingStats — invalidate them too.
   await deleteCacheByPrefix(PRODUCT_LIST_CACHE_PREFIX);
 
   console.log(
-    `[reviewSummary.cron] Done. processed=${processed} skipped=${skipped} failed=${failed}`
+    `[reviewSummary.cron] Completed. processed=${processed} skipped=${skipped} failed=${failed}`
   );
 }
 
