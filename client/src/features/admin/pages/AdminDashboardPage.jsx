@@ -114,7 +114,7 @@ export function AdminDashboardPage() {
         <MetricCard
           title="Registered Customers"
           value={totals?.customers ?? 0}
-          subtitle="Verified user accounts"
+          subtitle="Registered user accounts"
           icon={Users}
           color="bg-purple-300"
         />

@@ -114,7 +114,7 @@ export function ReviewList({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b-2.5 border-black">
         <div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
-            Verified ratings and feedback from actual users
+            Ratings and feedback from actual customers
           </p>
         </div>
 

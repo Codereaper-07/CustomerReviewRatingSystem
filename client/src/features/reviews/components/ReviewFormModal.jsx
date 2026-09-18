@@ -53,7 +53,7 @@ export function ReviewFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Edit Your Review' : 'Write a Verified Review'}
+      title={isEditing ? 'Edit Your Review' : 'Write a Review'}
     >
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 pt-2">
         {/* Rating Picker */}

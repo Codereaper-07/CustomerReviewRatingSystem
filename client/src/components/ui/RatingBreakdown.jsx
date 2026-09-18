@@ -25,7 +25,7 @@ export function RatingBreakdown({ ratingStats }) {
             <StarRating rating={average} size="md" />
           </div>
           <p className="mt-1 text-sm font-bold text-slate-600">
-            Based on {count} {count === 1 ? 'verified review' : 'verified reviews'}
+            Based on {count} {count === 1 ? 'review' : 'reviews'}
           </p>
         </div>
 

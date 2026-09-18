@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Trash2, ShieldCheck, Flag } from 'lucide-react';
+import { Edit2, Trash2, Flag } from 'lucide-react';
 import { formatRelativeTime } from '../../../utils/formatters.js';
 import StarRating from '../../../components/ui/StarRating.jsx';
 import VoteButtons from '../../votes/components/VoteButtons.jsx';
@@ -27,11 +27,8 @@ export function ReviewItem({
             {review.user?.name ? review.user.name.substring(0, 2).toUpperCase() : 'CU'}
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-black text-sm text-slate-900">{review.user?.name || 'Customer'}</span>
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 border-1 border-black px-1.5 py-0.2 rounded">
-                <ShieldCheck className="w-3 h-3" /> Verified
-              </span>
+            <div className="font-black text-sm text-slate-900">
+              {review.user?.name || 'Customer'}
             </div>
             <div className="text-xs font-semibold text-slate-500">
               {formatRelativeTime(review.createdAt)}

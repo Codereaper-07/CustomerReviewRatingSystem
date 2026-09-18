@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, ShieldCheck, Tag, Star, Brain, Sparkles } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Tag, Star, Brain, Sparkles } from 'lucide-react';
 import { useProduct } from '../hooks/useProducts.js';
 import { useReviewMutations } from '../../reviews/hooks/useReviewMutations.js';
 import { useAuth } from '../../auth/hooks/useAuth.js';
@@ -156,18 +156,6 @@ export function ProductDetailPage() {
               </p>
             </div>
           )}
-
-          <div className="p-4 neo-card-sm bg-emerald-50 flex items-center gap-3">
-            <ShieldCheck className="w-6 h-6 text-emerald-700 stroke-[2.5]" />
-            <div>
-              <div className="text-xs font-black text-emerald-900">
-                Guaranteed Verified Reviews
-              </div>
-              <div className="text-[11px] font-bold text-emerald-700">
-                All ratings and reviews on this product are submitted by verified accounts.
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Right 1 Col: Rating Breakdown & Summary */}

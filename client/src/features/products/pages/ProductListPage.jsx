@@ -52,10 +52,10 @@ export function ProductListPage() {
             <span>Discover &amp; Review</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
-            Verified Customer Reviews &amp; Product Ratings
+            Customer Reviews &amp; Product Ratings
           </h1>
           <p className="text-sm font-bold text-slate-700 leading-relaxed">
-            Browse our top-rated catalog, read in-depth honest reviews from verified buyers, and share your own experience.
+            Browse our top-rated catalog, read in-depth honest reviews from real buyers, and share your own experience.
           </p>
         </div>
 
