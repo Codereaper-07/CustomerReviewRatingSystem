@@ -20,7 +20,6 @@ export function ProductFilter({
             placeholder="Search catalog by name or keyword..."
             className="neo-input pl-10 pr-4 py-2 text-sm"
           />
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 stroke-[2.5]" />
         </div>
 
         {/* Category Pills */}
