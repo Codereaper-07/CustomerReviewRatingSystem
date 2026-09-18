@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { MessageSquarePlus, RefreshCw, Star } from 'lucide-react';
+import { MessageSquarePlus, RefreshCw, Star, ThumbsUp, Clock, ArrowUpDown } from 'lucide-react';
 import { useInfiniteReviews } from '../hooks/useReviews.js';
 import { useReviewMutations } from '../hooks/useReviewMutations.js';
 import { useVoteMutation } from '../../votes/hooks/useVoteMutation.js';
@@ -21,6 +21,8 @@ export function ReviewList({
 
   // Star filter state: null = "All", 1-5 = specific star rating.
   const [starFilter, setStarFilter] = useState(null);
+  // Sort state: 'newest' | 'upvotes'
+  const [sortBy, setSortBy] = useState('newest');
   // Reporting state
   const [reportingReview, setReportingReview] = useState(null);
 
@@ -53,11 +55,20 @@ export function ReviewList({
     return counts;
   }, [allReviews]);
 
-  // Reviews visible after applying the star filter.
+  // Reviews visible after applying the star filter and sort order.
   const reviews = useMemo(() => {
-    if (starFilter === null) return allReviews;
-    return allReviews.filter((r) => r.rating === starFilter);
-  }, [allReviews, starFilter]);
+    const list = starFilter === null ? allReviews : allReviews.filter((r) => r.rating === starFilter);
+
+    if (sortBy === 'upvotes') {
+      return [...list].sort((a, b) => {
+        const diff = (b.voteStats?.upvotes ?? 0) - (a.voteStats?.upvotes ?? 0);
+        if (diff !== 0) return diff;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    }
+
+    return [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [allReviews, starFilter, sortBy]);
 
   // Check if current user already submitted a review for this product.
   const userReview = useMemo(() => {
@@ -138,42 +149,79 @@ export function ReviewList({
         )}
       </div>
 
-      {/* Star Rating Filter Bar */}
+      {/* Filter & Sort Controls Bar */}
       {allReviews.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Filter:</span>
-          {/* "All" button */}
-          <button
-            onClick={() => setStarFilter(null)}
-            className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-black border-2 border-black rounded-md transition-colors shadow-[2px_2px_0_0_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] ${
-              starFilter === null
-                ? 'bg-black text-white'
-                : 'bg-white text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            All
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-black ${starFilter === null ? 'bg-white text-black' : 'bg-slate-100 text-slate-600'}`}>
-              {allReviews.length}
-            </span>
-          </button>
-          {/* 5 → 1 star buttons */}
-          {[5, 4, 3, 2, 1].map((star) => (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Star Filter */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Filter:</span>
+            {/* "All" button */}
             <button
-              key={star}
-              onClick={() => setStarFilter(starFilter === star ? null : star)}
+              onClick={() => setStarFilter(null)}
               className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-black border-2 border-black rounded-md transition-colors shadow-[2px_2px_0_0_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] ${
-                starFilter === star
-                  ? 'bg-amber-400 text-black'
-                  : 'bg-white text-slate-700 hover:bg-amber-50'
+                starFilter === null
+                  ? 'bg-black text-white'
+                  : 'bg-white text-slate-700 hover:bg-slate-100'
               }`}
             >
-              <Star className="w-3 h-3 fill-current" />
-              {star}
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-black ${starFilter === star ? 'bg-black text-white' : 'bg-slate-100 text-slate-600'}`}>
-                {starCounts[star]}
+              All
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-black ${starFilter === null ? 'bg-white text-black' : 'bg-slate-100 text-slate-600'}`}>
+                {allReviews.length}
               </span>
             </button>
-          ))}
+            {/* 5 → 1 star buttons */}
+            {[5, 4, 3, 2, 1].map((star) => (
+              <button
+                key={star}
+                onClick={() => setStarFilter(starFilter === star ? null : star)}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-black border-2 border-black rounded-md transition-colors shadow-[2px_2px_0_0_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] ${
+                  starFilter === star
+                    ? 'bg-amber-400 text-black'
+                    : 'bg-white text-slate-700 hover:bg-amber-50'
+                }`}
+              >
+                <Star className="w-3 h-3 fill-current" />
+                {star}
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-black ${starFilter === star ? 'bg-black text-white' : 'bg-slate-100 text-slate-600'}`}>
+                  {starCounts[star]}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <span className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              Sort:
+            </span>
+            <div className="inline-flex border-2 border-black rounded-md bg-white p-0.5 shadow-[2px_2px_0_0_#000]">
+              <button
+                type="button"
+                onClick={() => setSortBy('newest')}
+                className={`px-2.5 py-1 text-xs font-black rounded transition-colors flex items-center gap-1 cursor-pointer ${
+                  sortBy === 'newest'
+                    ? 'bg-black text-white'
+                    : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <Clock className="w-3 h-3" />
+                Newest
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortBy('upvotes')}
+                className={`px-2.5 py-1 text-xs font-black rounded transition-colors flex items-center gap-1 cursor-pointer ${
+                  sortBy === 'upvotes'
+                    ? 'bg-amber-300 text-black'
+                    : 'text-slate-700 hover:bg-amber-50'
+                }`}
+              >
+                <ThumbsUp className="w-3 h-3 stroke-[2.5]" />
+                Most Upvoted
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
