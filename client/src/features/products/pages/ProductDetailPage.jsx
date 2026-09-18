@@ -147,9 +147,9 @@ export function ProductDetailPage() {
                     AI Review Summary
                   </h3>
                 </div>
-                <span className="neo-badge bg-violet-200 text-violet-900 text-[10px] flex items-center gap-1">
+                {/* <span className="neo-badge bg-violet-200 text-violet-900 text-[10px] flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" /> Gemini
-                </span>
+                </span> */}
               </div>
               <p className="text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
                 {product.aiSummary}

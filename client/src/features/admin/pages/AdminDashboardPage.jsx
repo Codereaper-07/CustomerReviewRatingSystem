@@ -282,9 +282,9 @@ export function AdminDashboardPage() {
               <Brain className="w-5 h-5 text-violet-600" />
               AI Product Insights
             </h2>
-            <p className="text-xs font-bold text-slate-500 mt-0.5">
+            {/* <p className="text-xs font-bold text-slate-500 mt-0.5">
               Gemini-powered review summaries &amp; sentiment — refreshed daily at midnight
-            </p>
+            </p> */}
           </div>
           <Button
             variant="secondary"
