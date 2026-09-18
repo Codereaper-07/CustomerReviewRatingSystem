@@ -227,6 +227,10 @@ export function ReviewList({
                   toast.info('Please log in to report a review.', 'Authentication Required');
                   return;
                 }
+                if (user?.role === 'admin') {
+                  toast.info('Administrators cannot submit reports. Use the Admin Reports panel to moderate.', 'Action Not Allowed');
+                  return;
+                }
                 setReportingReview(rev);
               }}
               isDeleting={isDeleting}

@@ -18,7 +18,7 @@ import Accordion from '../../../components/ui/Accordion.jsx';
 export function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const toast = useToast();
 
   const { data: product, isLoading, isError, error } = useProduct(productId);
@@ -31,6 +31,10 @@ export function ProductDetailPage() {
     if (!isAuthenticated) {
       toast.info('Please log in to write a review.', 'Sign In Required');
       navigate('/login', { state: { from: { pathname: `/products/${productId}` } } });
+      return;
+    }
+    if (user?.role === 'admin') {
+      toast.info('Administrators cannot submit customer reviews.', 'Action Not Allowed');
       return;
     }
     setEditingReview(null);

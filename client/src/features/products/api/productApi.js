@@ -21,7 +21,7 @@ export const productApi = {
   },
 
   async updateProduct(productId, data) {
-    const response = await apiClient.put(`/products/${productId}`, data);
+    const response = await apiClient.patch(`/products/${productId}`, data);
     return response.data.data;
   },
 

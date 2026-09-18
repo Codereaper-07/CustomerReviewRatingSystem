@@ -21,6 +21,11 @@ async function start() {
   // Start the nightly AI review summary cron job.
   const cronTask = startReviewSummaryCron();
 
+  // Run initial review summary check in background after infrastructure is ready
+  runReviewSummaryCron().catch((err) => {
+    console.error('[server] Initial review summary run error:', err.message);
+  });
+
   registerGracefulShutdown(httpServer, cronTask);
 }
 
@@ -73,7 +78,3 @@ start().catch((err) => {
   console.error('[server] Failed to start:', err);
   process.exit(1);
 });
-
-runReviewSummaryCron()
-  .then(() => console.log('Review summary cron completed'))
-  .catch(console.error);
