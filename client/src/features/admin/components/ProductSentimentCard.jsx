@@ -9,9 +9,9 @@ import { formatRelativeTime } from '../../../utils/formatters.js';
  */
 export function ProductSentimentCard({ product }) {
   const { name, reviewCount, averageRating, aiInsights } = product;
-  const { summary, sentiment, lastGeneratedAt } = aiInsights;
+  const { summary, sentiment, lastGeneratedAt, isGibberish } = aiInsights;
 
-  const hasInsights = summary && summary !== 'No reviews yet.';
+  const hasInsights = !isGibberish && summary && summary !== 'No reviews yet.';
 
   return (
     <div className="neo-card p-5 bg-white space-y-4">
@@ -35,7 +35,11 @@ export function ProductSentimentCard({ product }) {
       {/* AI Summary */}
       <div className="space-y-1.5">
         <p className="text-xs font-black uppercase tracking-wider text-slate-400">AI Summary</p>
-        {hasInsights ? (
+        {isGibberish ? (
+          <div className="p-2.5 bg-amber-50 border-1.5 border-amber-300 rounded text-xs font-bold text-amber-900">
+            ⚠️ Reviews flagged as gibberish or spam. Summary suppressed from customer view.
+          </div>
+        ) : hasInsights ? (
           <p className="text-xs font-medium text-slate-700 leading-relaxed">
             {summary}
           </p>

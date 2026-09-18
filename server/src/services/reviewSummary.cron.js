@@ -11,35 +11,73 @@ const ADMIN_INSIGHTS_CACHE_KEY = 'admin:product-insights';
 
 /**
  * Runs the Gemini summary job for a single product.
- * Fetches all its reviews, calls the Gemini service, and saves
- * the result back onto the product document.
+ * Fetches a stratified sample of its reviews (latest + most helpful),
+ * calls the Gemini service, and saves the result back onto the product document.
  *
- * Skips products if no reviews have been added/modified since the last summary.
+ * Implements:
+ * - Dynamic threshold trigger:
+ *     For <= 20 reviews: triggers on >= 1 new review.
+ *     For > 20 reviews: triggers on >= 5 new reviews OR after 30 days.
+ * - Stratified sample window (up to 25 latest + up to 25 most helpful reviews).
+ * - Gibberish detection: suppresses summary if reviews lack meaningful content.
  *
  * @param {{ _id: ObjectId, name: string, ratingStats: { count: number }, aiInsights?: object }} product
  * @returns {Promise<'processed' | 'skipped'>}
  */
 async function processProduct(product) {
-  if (!product.ratingStats?.count || product.ratingStats.count === 0) {
+  const totalCount = product.ratingStats?.count ?? 0;
+  if (totalCount === 0) {
     return 'skipped';
   }
 
-  // If a summary already exists, check if any review was created/updated after lastGeneratedAt
-  if (product.aiInsights?.lastGeneratedAt && product.aiInsights?.summary) {
-    const hasNewerReview = await Review.exists({
+  // Dynamic threshold check if a summary has been generated previously
+  if (product.aiInsights?.lastGeneratedAt) {
+    const THRESHOLD_COUNT = 5;
+    const MAX_STALE_DAYS = 30;
+
+    const msSinceLast = Date.now() - new Date(product.aiInsights.lastGeneratedAt).getTime();
+    const daysSinceLast = msSinceLast / (1000 * 60 * 60 * 24);
+
+    const newReviewsCount = await Review.countDocuments({
       productId: product._id,
       updatedAt: { $gt: product.aiInsights.lastGeneratedAt },
     });
 
-    if (!hasNewerReview) {
-      console.log(`[reviewSummary.cron] Skipping "${product.name}": reviews have not changed since last summary.`);
-      return 'skipped';
+    if (totalCount > 20) {
+      if (newReviewsCount < THRESHOLD_COUNT && daysSinceLast < MAX_STALE_DAYS) {
+        console.log(
+          `[reviewSummary.cron] Skipping "${product.name}": only ${newReviewsCount} new reviews (threshold ${THRESHOLD_COUNT}) and ${daysSinceLast.toFixed(1)} days since last summary.`
+        );
+        return 'skipped';
+      }
+    } else {
+      if (newReviewsCount === 0) {
+        console.log(`[reviewSummary.cron] Skipping "${product.name}": reviews have not changed since last summary.`);
+        return 'skipped';
+      }
     }
   }
 
-  const reviews = await Review.find({ productId: product._id })
-    .select('rating title body')
-    .lean();
+  // Stratified sample: up to 25 most recent + up to 25 most upvoted reviews
+  const [recentReviews, topHelpfulReviews] = await Promise.all([
+    Review.find({ productId: product._id })
+      .sort({ createdAt: -1 })
+      .limit(25)
+      .select('rating title body')
+      .lean(),
+    Review.find({ productId: product._id })
+      .sort({ 'voteStats.upvotes': -1, createdAt: -1 })
+      .limit(25)
+      .select('rating title body')
+      .lean(),
+  ]);
+
+  // Combine and deduplicate
+  const reviewMap = new Map();
+  for (const r of [...recentReviews, ...topHelpfulReviews]) {
+    reviewMap.set(r._id.toString(), r);
+  }
+  const reviews = Array.from(reviewMap.values());
 
   if (!reviews.length) return 'skipped';
 
@@ -49,8 +87,9 @@ async function processProduct(product) {
     { _id: product._id },
     {
       $set: {
-        'aiInsights.summary': insights.summary,
+        'aiInsights.summary': insights.isGibberish ? null : insights.summary,
         'aiInsights.sentiment': insights.sentiment,
+        'aiInsights.isGibberish': insights.isGibberish,
         'aiInsights.lastGeneratedAt': new Date(),
       },
     }

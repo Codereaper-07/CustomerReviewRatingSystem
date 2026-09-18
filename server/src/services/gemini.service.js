@@ -83,6 +83,7 @@ function isQuotaOrRateLimitError(error) {
 export async function generateReviewInsights(reviews) {
   if (!reviews || reviews.length === 0) {
     return {
+      isGibberish: false,
       summary: 'No reviews yet.',
       sentiment: { positive: 0, neutral: 0, negative: 0 },
     };
@@ -108,9 +109,14 @@ You are a product review analyst. Analyze the following customer reviews and ret
 Customer Reviews:
 ${reviewText}
 
+Evaluate if the reviews are coherent or gibberish.
+- Set "isGibberish": true if the reviews predominantly contain random character mash (e.g. "asdfasdf", "kjsdhf"), repetitive nonsense, placeholder text (e.g. "test test", "lorem ipsum"), or lack any intelligible customer feedback about the product.
+- Set "isGibberish": false if the reviews contain genuine, understandable human feedback or opinions (even if brief or informal).
+
 Return ONLY valid JSON in this exact format:
 {
-  "summary": "A concise 2-3 sentence summary of what customers think about this product overall.",
+  "isGibberish": <boolean>,
+  "summary": <string or null> (A concise 2-3 sentence summary of what customers think about this product overall. If isGibberish is true, this must be null),
   "sentiment": {
     "positive": <integer percentage 0-100>,
     "neutral": <integer percentage 0-100>,
@@ -119,10 +125,11 @@ Return ONLY valid JSON in this exact format:
 }
 
 Rules:
-- positive + neutral + negative must sum to exactly 100
-- Base sentiment on the tone and content of the reviews, not just star ratings
-- The summary should highlight the most common praise and complaints
-- Return ONLY the JSON object, no extra text
+- If isGibberish is true, set summary to null and set positive, neutral, negative all to 0.
+- If isGibberish is false, positive + neutral + negative must sum to exactly 100.
+- Base sentiment on the tone and content of the reviews, not just star ratings.
+- The summary should highlight the most common praise and complaints.
+- Return ONLY the JSON object, no extra text.
 `;
 
   const MAX_ATTEMPTS = 3;
@@ -144,14 +151,22 @@ Rules:
       }
 
       // Validate and normalise the response.
-      const { summary, sentiment } = parsed;
-      const positive = Math.max(0, Math.min(100, Math.round(Number(sentiment?.positive) || 0)));
-      const negative = Math.max(0, Math.min(100, Math.round(Number(sentiment?.negative) || 0)));
-      // Ensure percentages sum to 100.
-      const neutral = Math.max(0, 100 - positive - negative);
+      const isGibberish = Boolean(parsed.isGibberish);
+      let summary = null;
+      let positive = 0;
+      let neutral = 0;
+      let negative = 0;
+
+      if (!isGibberish) {
+        positive = Math.max(0, Math.min(100, Math.round(Number(parsed.sentiment?.positive) || 0)));
+        negative = Math.max(0, Math.min(100, Math.round(Number(parsed.sentiment?.negative) || 0)));
+        neutral = Math.max(0, 100 - positive - negative);
+        summary = typeof parsed.summary === 'string' && parsed.summary.trim() ? parsed.summary.trim() : null;
+      }
 
       return {
-        summary: typeof summary === 'string' && summary.trim() ? summary.trim() : 'No summary available.',
+        isGibberish,
+        summary,
         sentiment: { positive, neutral, negative },
       };
     } catch (err) {

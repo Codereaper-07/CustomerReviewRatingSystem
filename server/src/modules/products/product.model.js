@@ -41,6 +41,7 @@ const aiInsightsSchema = new Schema(
   {
     summary: { type: String, default: null },
     sentiment: { type: sentimentSchema, default: () => ({}) },
+    isGibberish: { type: Boolean, default: false },
     lastGeneratedAt: { type: Date, default: null },
   },
   { _id: false }

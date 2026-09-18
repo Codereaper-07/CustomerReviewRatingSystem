@@ -155,6 +155,7 @@ export async function getProductInsights() {
     aiInsights: {
       summary: p.aiInsights?.summary ?? null,
       sentiment: p.aiInsights?.sentiment ?? { positive: 0, neutral: 0, negative: 0 },
+      isGibberish: p.aiInsights?.isGibberish ?? false,
       lastGeneratedAt: p.aiInsights?.lastGeneratedAt ?? null,
     },
   }));
