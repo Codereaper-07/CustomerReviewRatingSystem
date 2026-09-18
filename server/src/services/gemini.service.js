@@ -90,7 +90,7 @@ export async function generateReviewInsights(reviews) {
   }
 
   const genAI = getGenAI();
-  const modelName = env.geminiModel || 'gemini-1.5-flash';
+  const modelName = env.geminiModel || 'gemini-3.5-flash';
   const model = genAI.getGenerativeModel({
     model: modelName,
     generationConfig: {

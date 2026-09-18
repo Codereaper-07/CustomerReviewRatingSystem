@@ -52,7 +52,7 @@ const env = {
   // Gemini API key for AI review summaries.
   // Optional in development — cron job will log an error and skip if not set.
   geminiApiKey: process.env.GEMINI_API_KEY || null,
-  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
   geminiMaxRpm: Math.max(1, Number(process.env.GEMINI_MAX_RPM) || 5), // Default 5 requests/min (1 every 12s)
 };
 
