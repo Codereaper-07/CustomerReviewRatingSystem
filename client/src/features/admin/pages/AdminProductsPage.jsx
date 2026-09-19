@@ -137,8 +137,26 @@ export function AdminProductsPage() {
                 filteredProducts.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
-                      <div className="font-black text-slate-900">{p.name}</div>
-                      <div className="text-xs font-semibold text-slate-400">{p.slug}</div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded border-1.5 border-black overflow-hidden bg-amber-50 shrink-0 flex items-center justify-center">
+                          {p.image ? (
+                            <img
+                              src={p.image}
+                              alt={p.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <Package className="w-5 h-5 text-slate-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-black text-slate-900">{p.name}</div>
+                          <div className="text-xs font-semibold text-slate-400">{p.slug}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="p-4">
                       <Badge variant="secondary">{p.category}</Badge>

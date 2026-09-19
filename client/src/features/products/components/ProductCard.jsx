@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ArrowUpRight, ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '../../../utils/formatters.js';
@@ -6,8 +6,11 @@ import Badge from '../../../components/ui/Badge.jsx';
 import Button from '../../../components/ui/Button.jsx';
 
 export function ProductCard({ product }) {
+  const [imageError, setImageError] = useState(false);
   const ratingAverage = product.ratingStats?.average ?? 0;
   const ratingCount = product.ratingStats?.count ?? 0;
+
+  const showImage = Boolean(product.image) && !imageError;
 
   return (
     <div className="neo-card neo-card-hover p-5 flex flex-col justify-between bg-white group">
@@ -20,15 +23,27 @@ export function ProductCard({ product }) {
           </span>
         </div>
 
-        {/* Product Visual / Placeholder */}
-        <div className="w-full h-44 bg-amber-50 border-2 border-black rounded-lg flex items-center justify-center relative overflow-hidden group-hover:bg-amber-100 transition-colors">
-          <ShoppingBag className="w-14 h-14 text-slate-400 stroke-[1.5]" />
-          <div className="absolute top-2 right-2">
-            <span className="neo-badge bg-white text-[11px] py-0.5 px-1.5 shadow-[1.5px_1.5px_0_0_#000]">
-              {product.slug}
-            </span>
+        {/* Product Visual / Image */}
+        <Link to={`/products/${product.id}`} className="block">
+          <div className="w-full h-44 bg-amber-50 border-2 border-black rounded-lg flex items-center justify-center relative overflow-hidden group-hover:border-black transition-colors">
+            {showImage ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                loading="lazy"
+                onError={() => setImageError(true)}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <ShoppingBag className="w-14 h-14 text-slate-400 stroke-[1.5]" />
+            )}
+            <div className="absolute top-2 right-2">
+              <span className="neo-badge bg-white/95 backdrop-blur-xs text-[11px] py-0.5 px-1.5 shadow-[1.5px_1.5px_0_0_#000]">
+                {product.slug}
+              </span>
+            </div>
           </div>
-        </div>
+        </Link>
 
         {/* Title & Description */}
         <div>

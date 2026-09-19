@@ -214,18 +214,34 @@ export function AdminDashboardPage() {
           <div className="divide-y-2 divide-slate-100">
             {recentProducts.map((p) => (
               <div key={p.id} className="py-3 flex items-center justify-between gap-3">
-                <div>
-                  <Link
-                    to={`/products/${p.id}`}
-                    className="font-black text-sm text-slate-900 hover:underline"
-                  >
-                    {p.name}
-                  </Link>
-                  <div className="text-xs font-bold text-slate-500 mt-0.5">
-                    {formatCurrency(p.price)} • {p.ratingStats?.count ?? 0} reviews
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded border-1.5 border-black overflow-hidden bg-amber-50 shrink-0 flex items-center justify-center">
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <Package className="w-4 h-4 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <Link
+                      to={`/products/${p.id}`}
+                      className="font-black text-sm text-slate-900 hover:underline truncate block"
+                    >
+                      {p.name}
+                    </Link>
+                    <div className="text-xs font-bold text-slate-500 mt-0.5">
+                      {formatCurrency(p.price)} • {p.ratingStats?.count ?? 0} reviews
+                    </div>
                   </div>
                 </div>
-                <span className="neo-badge bg-amber-300 text-[10px]">
+                <span className="neo-badge bg-amber-300 text-[10px] shrink-0">
                   ★ {(p.ratingStats?.average ?? 0).toFixed(1)}
                 </span>
               </div>
