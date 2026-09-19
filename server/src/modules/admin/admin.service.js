@@ -17,6 +17,7 @@ function toRecentProduct(doc) {
     name: doc.name,
     slug: doc.slug,
     price: doc.price,
+    image: doc.image ?? null,
     ratingStats: doc.ratingStats,
     createdAt: doc.createdAt,
   };

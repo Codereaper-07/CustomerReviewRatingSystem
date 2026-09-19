@@ -26,6 +26,7 @@ export function ProductDetailPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+  const [imageError, setImageError] = useState(false);
 
   const handleOpenWriteModal = () => {
     if (!isAuthenticated) {
@@ -121,10 +122,19 @@ export function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Placeholder Product Image Banner */}
-          <div className="w-full h-64 bg-amber-50 border-2.5 border-black rounded-xl flex items-center justify-center relative overflow-hidden shadow-[3px_3px_0_0_#000]">
-            <ShoppingBag className="w-20 h-20 text-slate-300 stroke-[1.5]" />
-            <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white border-1.5 border-black px-2.5 py-1 rounded-md text-xs font-black shadow-[1.5px_1.5px_0_0_#000]">
+          {/* Product Image Banner */}
+          <div className="w-full h-72 sm:h-80 bg-amber-50 border-2.5 border-black rounded-xl flex items-center justify-center relative overflow-hidden shadow-[3px_3px_0_0_#000]">
+            {product.image && !imageError ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                onError={() => setImageError(true)}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ShoppingBag className="w-20 h-20 text-slate-300 stroke-[1.5]" />
+            )}
+            <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-xs border-1.5 border-black px-2.5 py-1 rounded-md text-xs font-black shadow-[1.5px_1.5px_0_0_#000]">
               <Tag className="w-3.5 h-3.5 mr-1 text-amber-500" />
               SKU: {product.slug}
             </div>

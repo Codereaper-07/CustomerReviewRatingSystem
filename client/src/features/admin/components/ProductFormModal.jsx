@@ -37,11 +37,13 @@ export function ProductFormModal({
       slug: '',
       category: 'Electronics',
       price: '',
+      image: '',
       description: '',
     },
   });
 
   const nameValue = watch('name');
+  const imageValue = watch('image');
 
   useEffect(() => {
     if (!isEditing && nameValue) {
@@ -56,6 +58,7 @@ export function ProductFormModal({
         slug: initialData.slug || '',
         category: initialData.category || 'Electronics',
         price: initialData.price || '',
+        image: initialData.image || '',
         description: initialData.description || '',
       });
     } else {
@@ -64,6 +67,7 @@ export function ProductFormModal({
         slug: '',
         category: 'Electronics',
         price: '',
+        image: '',
         description: '',
       });
     }
@@ -128,6 +132,32 @@ export function ProductFormModal({
               min: { value: 0.01, message: 'Price must be greater than 0' },
             })}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Input
+            label="Product Image URL"
+            placeholder="e.g. https://images.unsplash.com/photo-..."
+            error={errors.image?.message}
+            {...register('image')}
+          />
+          {imageValue && (
+            <div className="flex items-center gap-3 p-2 bg-amber-50 border-1.5 border-black rounded-lg">
+              <div className="w-14 h-14 rounded border border-black overflow-hidden bg-white shrink-0">
+                <img
+                  src={imageValue}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+              <p className="text-xs font-bold text-slate-600 truncate">
+                Image preview: {imageValue}
+              </p>
+            </div>
+          )}
         </div>
 
         <Textarea

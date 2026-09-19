@@ -10,7 +10,8 @@
     "start": "node src/server.js",
     "seed": "node src/scripts/seedAll.js",
     "seed:products": "node src/scripts/seedProducts.js",
-    "seed:admin": "node src/scripts/seedAdmin.js"
+    "seed:admin": "node src/scripts/seedAdmin.js",
+    "update:images": "node src/scripts/updateProductImages.js"
   },
   "engines": {
     "node": ">=18.0.0"
