@@ -380,4 +380,77 @@ export async function deleteReview(reviewId, userId) {
   await invalidateAdminDashboardCache();
 }
 
-export default { listReviews, createReview, updateReview, deleteReview };
+/**
+ * Administratively deletes a review regardless of owner (for moderation).
+ * Atomically decrements Product.ratingStats in the same transaction
+ * and invalidates all affected caches.
+ */
+export async function deleteReviewByAdmin(reviewId) {
+  const session = await mongoose.startSession();
+  let productId;
+  let deletedReview;
+
+  try {
+    session.startTransaction();
+
+    const review = await Review.findById(reviewId).session(session);
+    if (!review) {
+      // Review may have already been deleted
+      await session.abortTransaction();
+      return null;
+    }
+
+    deletedReview = review;
+    productId = review.productId;
+
+    await Review.deleteOne({ _id: reviewId }).session(session);
+
+    const product = await Product.findById(productId).session(session);
+    if (product) {
+      const bucketKey = RATING_BUCKET_KEYS[review.rating];
+      const distribution = product.ratingStats.distribution;
+
+      const newBucketValue = Math.max(0, distribution[bucketKey] - 1);
+      const newCount = Math.max(0, product.ratingStats.count - 1);
+
+      const newDistribution = {
+        one: distribution.one,
+        two: distribution.two,
+        three: distribution.three,
+        four: distribution.four,
+        five: distribution.five,
+        [bucketKey]: newBucketValue,
+      };
+      const newAverage = computeAverage(newDistribution, newCount);
+
+      await Product.updateOne(
+        { _id: productId },
+        {
+          $set: {
+            [`ratingStats.distribution.${bucketKey}`]: newBucketValue,
+            'ratingStats.count': newCount,
+            'ratingStats.average': newAverage,
+          },
+        },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    await session.endSession();
+  }
+
+  if (productId) {
+    await invalidateReviewListCache(productId);
+    await invalidateProductRatingCaches(productId);
+    await invalidateAdminDashboardCache();
+  }
+
+  return deletedReview;
+}
+
+export default { listReviews, createReview, updateReview, deleteReview, deleteReviewByAdmin };

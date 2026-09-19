@@ -18,6 +18,7 @@ router.get('/:productId', validateProductIdParam, getProduct);
 // Admin-only writes: authenticate -> requireAdmin -> validation -> controller.
 router.post('/', authenticate, requireAdmin, validateCreateProduct, createProduct);
 router.patch('/:productId', authenticate, requireAdmin, validateProductIdParam, validateUpdateProduct, updateProduct);
+router.put('/:productId', authenticate, requireAdmin, validateProductIdParam, validateUpdateProduct, updateProduct);
 router.delete('/:productId', authenticate, requireAdmin, validateProductIdParam, deleteProduct);
 
 export default router;

@@ -32,9 +32,16 @@ function toRecentReview(doc) {
   const userIsPopulated = rawUser && typeof rawUser === 'object' && rawUser.name !== undefined;
   const user = userIsPopulated ? { id: rawUser._id.toString(), name: rawUser.name } : { id: rawUser?.toString() };
 
+  const rawProduct = doc.productId;
+  const productIsPopulated = rawProduct && typeof rawProduct === 'object' && rawProduct.name !== undefined;
+  const product = productIsPopulated
+    ? { id: rawProduct._id.toString(), name: rawProduct.name, slug: rawProduct.slug }
+    : { id: rawProduct?.toString(), name: null };
+
   return {
     id: doc._id.toString(),
-    productId: doc.productId.toString(),
+    productId: product.id,
+    productName: product.name,
     user,
     rating: doc.rating,
     title: doc.title,
@@ -81,7 +88,12 @@ export async function getDashboard() {
     ]),
     User.countDocuments({ role: 'customer' }),
     Product.find().sort({ createdAt: -1 }).limit(RECENT_LIMIT).lean(),
-    Review.find().sort({ createdAt: -1 }).limit(RECENT_LIMIT).populate('userId', 'name').lean(),
+    Review.find()
+      .sort({ createdAt: -1 })
+      .limit(RECENT_LIMIT)
+      .populate('userId', 'name')
+      .populate('productId', 'name slug')
+      .lean(),
   ]);
 
   const totalRatingCount = productAgg?.totalRatingCount ?? 0;
@@ -114,4 +126,43 @@ export async function getDashboard() {
   return dashboard;
 }
 
-export default { getDashboard };
+const INSIGHTS_CACHE_KEY = 'admin:product-insights';
+const INSIGHTS_CACHE_TTL = 60 * 60; // 1 hour (in seconds)
+
+/**
+ * Returns every product's AI-generated review insights (summary +
+ * sentiment breakdown + lastGeneratedAt). Admin-only — never exposed
+ * to public product endpoints. The result is cached for 1 hour; the
+ * nightly cron job invalidates it after each run.
+ */
+export async function getProductInsights() {
+  const cached = await getCache(INSIGHTS_CACHE_KEY);
+  if (cached) return cached;
+
+  const products = await Product.find(
+    { 'ratingStats.count': { $gt: 0 } },
+    { _id: 1, name: 1, slug: 1, ratingStats: 1, aiInsights: 1 }
+  )
+    .sort({ 'ratingStats.count': -1 }) // most-reviewed first
+    .lean();
+
+  const insights = products.map((p) => ({
+    id: p._id.toString(),
+    name: p.name,
+    slug: p.slug,
+    reviewCount: p.ratingStats?.count ?? 0,
+    averageRating: p.ratingStats?.average ?? 0,
+    aiInsights: {
+      summary: p.aiInsights?.summary ?? null,
+      sentiment: p.aiInsights?.sentiment ?? { positive: 0, neutral: 0, negative: 0 },
+      isGibberish: p.aiInsights?.isGibberish ?? false,
+      lastGeneratedAt: p.aiInsights?.lastGeneratedAt ?? null,
+    },
+  }));
+
+  // Use a shorter TTL here since insights change daily.
+  await setCache(INSIGHTS_CACHE_KEY, insights, INSIGHTS_CACHE_TTL);
+  return insights;
+}
+
+export default { getDashboard, getProductInsights };
